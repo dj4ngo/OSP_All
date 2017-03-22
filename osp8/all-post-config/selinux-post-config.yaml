@@ -1,0 +1,29 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Disable selinux (set to permissive mode)
+
+parameters:
+  servers:
+    type: json
+  DeployIdentifier:
+    type: string
+
+resources:
+  SElinuxExtraPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: deploy_identifier
+      config: {get_file: scripts/selinux_disable.sh}
+
+  SElinuxExtraPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: SElinuxExtraPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']
+      input_values:
+        deploy_identifier: {get_param: DeployIdentifier}
+

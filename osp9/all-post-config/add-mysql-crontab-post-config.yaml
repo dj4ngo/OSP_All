@@ -1,0 +1,22 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Add MYSQL database dump crontab entry on controller-0
+
+parameters:
+  servers:
+    type: json
+
+resources:
+  AddMysqlCrontabExtraPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/add_mysql_crontab.sh}
+
+  AddMysqlCrontabExtraPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: AddMysqlCrontabExtraPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']

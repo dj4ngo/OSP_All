@@ -1,0 +1,28 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Example extra config for post-deployment, this re-runs every update
+
+parameters:
+  servers:
+    type: json
+  DeployIdentifier:
+    type: string
+
+resources:
+  DeployIdentifierPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+        - name: deploy_identifier
+      config: {get_file: scripts/update_deployid.sh}
+
+  DeployIdentifierPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: DeployIdentifierPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']
+      input_values:
+        deploy_identifier: {get_param: DeployIdentifier}

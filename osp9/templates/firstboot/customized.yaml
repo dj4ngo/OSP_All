@@ -1,0 +1,44 @@
+heat_template_version: 2014-10-16
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: customized}
+
+  customized:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: |
+        #!/bin/bash
+        case "$(hostname)" in
+          *)
+            #
+            for i in {b,c,d,e,f,g,i,j,k,l,m,n}; do
+              if [ -b /dev/sd${i} ]; then
+                echo "(II) Wiping disk /dev/sd${i}..."
+                sgdisk -Z /dev/sd${i}
+              fi
+            done
+          ;;
+        esac
+        # Setup perf profile
+        case "$(hostname)" in
+          *ctrl*)
+            #/usr/sbin/tuned-adm profile latency-performance
+            /usr/sbin/tuned-adm profile virtual-guest
+          ;;
+          *ceph*)
+            #/usr/sbin/tuned-adm profile throughput-performance
+            /usr/sbin/tuned-adm profile virtual-guest
+          ;;
+          *)
+            #/usr/sbin/tuned-adm profile network-latency
+            /usr/sbin/tuned-adm profile virtual-guest
+          ;;
+        esac
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}

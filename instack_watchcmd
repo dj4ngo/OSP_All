@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# OSP7/8/9
+# watch -n5 "ironic node-list | grep -v 'available'; heat stack-list 2>/dev/null ; heat resource-list -n3 overcloud 2>/dev/null| grep -v COMPLETE"
+
+# OSP10
+# openstack stack event list --follow --nested-depth 5 overcloud
+# openstack stack resource list --filter type=OS::Heat::SoftwareDeployment --filter status=CREATE_IN_PROGRESS -n5 overcloud
+# watch -n5 "echo 'ironic nodes provisioning'; openstack baremetal node list | egrep -v 'power.off|active'; openstack stack list --nested -c 'Stack Name' --property stack_status=IN_PROGRESS --property stack_status=FAILED -f value | sort | xargs -I% bash -c 'echo; echo %; openstack stack resource list --filter status=IN_PROGRESS % -c resource_name -c physical_resource_id -c resource_type -c resource_status'"
+watch -n5 "ironic node-list | grep -v 'available'; openstack stack list ; openstack stack resource list overcloud -n 3| grep -v _COMPLETE"

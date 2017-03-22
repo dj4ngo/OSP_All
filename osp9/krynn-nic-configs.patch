@@ -1,0 +1,43 @@
+diff -cr network/config/bond-with-vlans/controller.yaml krynn-nic-configs/controller.yaml
+*** network/config/bond-with-vlans/controller.yaml	2016-03-28 11:42:18.000000000 -0400
+--- krynn-nic-configs/controller.yaml	2016-09-02 09:42:46.000000000 -0400
+***************
+*** 122,134 ****
+                    type: vlan
+                    device: bond1
+                    vlan_id: {get_param: ExternalNetworkVlanID}
+-                   addresses:
+-                     -
+-                       ip_netmask: {get_param: ExternalIpSubnet}
+-                   routes:
+-                     -
+-                       default: true
+-                       next_hop: {get_param: ExternalInterfaceDefaultRoute}
+                  -
+                    type: vlan
+                    device: bond1
+--- 122,127 ----
+***************
+*** 157,162 ****
+--- 150,169 ----
+                    addresses:
+                      -
+                        ip_netmask: {get_param: TenantIpSubnet}
++             -
++               type: ovs_bridge
++               name: br-extnet
++               addresses:
++                 -
++                   ip_netmask: {get_param: ExternalIpSubnet}
++               routes:
++                 -
++                   default: true
++                   next_hop: {get_param: ExternalInterfaceDefaultRoute}
++               members:
++                 -
++                   type: interface
++                   name: nic4
+                  # Uncomment when including environments/network-management.yaml
+                  #-
+                  #  type: vlan
+Only in krynn-nic-configs: nic-configs

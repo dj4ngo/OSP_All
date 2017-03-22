@@ -1,0 +1,19 @@
+heat_template_version: 2014-10-16
+description: 'Extra Pre-Deployment Config, Controller'
+parameters:
+  server:
+    type: string
+
+# Note depends_on may be used for serialization if ordering is important
+resources:
+  KeystoneTokenExpiration:
+    type: all-pre-config/apply-keystone-token-expiration.yaml
+    properties:
+        server: {get_param: server}
+
+outputs:
+  deploy_stdout:
+    value:
+      list_join:
+      - ''
+      - - {get_attr: [KeystoneTokenExpiration, deploy_stdout]}

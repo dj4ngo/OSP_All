@@ -1,0 +1,96 @@
+resource_registry:
+  # FirstBoot
+  OS::TripleO::NodeUserData:                    all-firstboot-config.yaml
+  # Pre-Deploy
+  OS::TripleO::ControllerExtraConfigPre:        controller-pre-config.yaml
+  OS::TripleO::ComputeExtraConfigPre:           compute-pre-config.yaml
+  OS::TripleO::CephStorageExtraConfigPre:       ceph-pre-config.yaml
+  OS::TripleO::NodeExtraConfig:                 all-pre-config.yaml
+  # Post-Deploy
+  OS::TripleO::NodeExtraConfigPost:             all-post-config.yaml
+
+parameter_defaults:
+  Debug: true
+  #
+  OvercloudControlFlavor: control
+  OvercloudComputeFlavor: compute
+  OvercloudCephStorageFlavor: ceph-storage
+  #
+  # ControllerCount: 1
+  # ComputeCount: 1
+  # BlockStorageCount: 0
+  # ObjectStorageCount: 1
+  # CephStorageCount: 1
+  #
+  MysqlMaxConnections: 16384
+  RabbitFDLimit: 65436
+  HeatWorkers: 4
+  NovaComputeLibvirtType: 'qemu'
+  # NovaComputeLibvirtType: 'kvm'
+  RootPW: 'r00tme'
+  #
+  # CloudDomain: lasthome.solace.krynn
+  ControllerHostnameFormat: 'krynn-ctrl-%index%'
+  ComputeHostnameFormat: 'krynn-cmpt-%index%'
+  CephStorageHostnameFormat: 'krynn-ceph-%index%'
+  ObjectStorageHostnameFormat: 'krynn-swift-%index%'
+  #
+  # This section is where deployment-specific configuration is done
+  # Customize the IP subnets to match the local environment
+  InternalApiNetCidr: 10.0.0.0/24
+  StorageNetCidr: 10.1.0.0/24
+  StorageMgmtNetCidr: 10.2.0.0/24
+  TenantNetCidr: 10.3.0.0/24
+  # Customize the IP ranges on each network to use for static IPs and VIPs
+  InternalApiAllocationPools: [{'start': '10.0.0.10', 'end': '10.0.0.200'}]
+  StorageAllocationPools: [{'start': '10.1.0.10', 'end': '10.1.0.200'}]
+  StorageMgmtAllocationPools: [{'start': '10.2.0.10', 'end': '10.2.0.200'}]
+  TenantAllocationPools: [{'start': '10.3.0.10', 'end': '10.3.0.200'}]
+  # Customize the VLAN IDs to match the local environment
+  InternalApiNetworkVlanID: 10
+  StorageNetworkVlanID: 20
+  StorageMgmtNetworkVlanID: 30
+  TenantNetworkVlanID: 40
+  #
+  #### ExternalNetworkVlanID: 50
+  #### ExternalNetCidr: 10.0.0.0/24
+  #### ExternalAllocationPools: [{'start': '10.0.0.10', 'end': '10.0.0.50'}]
+  #### ExternalInterfaceDefaultRoute: 10.0.0.1
+  # 
+  # CIDR subnet mask length for provisioning network
+  ControlPlaneSubnetCidr: '24'
+  # Gateway router for the provisioning network (or Undercloud IP)
+  ControlPlaneDefaultRoute: '10.20.0.2'
+  # Generally the IP of the Undercloud
+  EC2MetadataIp: '10.20.0.2'
+  ControllerEnableSwiftStorage: false
+  #
+  CinderEnableIscsiBackend: false
+  NovaEnableRbdBackend: true
+  CinderEnableRbdBackend: true
+  CinderBackupBackend: ceph
+  GlanceBackend: rbd
+  GnocchiBackend: rbd
+  # GlanceBackend: swift
+  NovaRbdPoolName: vms
+  CinderRbdPoolName: volumes
+  GlanceRbdPoolName: images
+  #
+  NeutronEnableIsolatedMetadata: True
+  NeutronVniRanges: [ "1:4094" ]
+  # Set to empty string to enable multiple external networks or VLANs
+  NeutronExternalNetworkBridge: "''"
+  NeutronBridgeMappings: "datacentre:br-ex,external:br-extnet"
+  NeutronFlatNetworks: "datacentre,external"
+  NeutronNetworkType: 'vxlan,gre,vlan,flat'
+  NeutronTunnelTypes: 'vxlan'
+  NeutronL3HA: true
+  #
+  # Linux Bonds:
+  BondInterfaceOvsOptions: "mode=active-backup miimon=200"
+  # OVS Bonds:
+  # BondInterfaceOvsOptions: "bond_mode=balance-slb lacp=active other-config:lacp-fallback-ab=true other-config:lacp-time=fast bond_updelay=15000"
+  # BondInterfaceOvsOptions: "bond_mode=balance-slb lacp=off other_config:bond-detect-mode=miimon"
+  # BondInterfaceOvsOptions: "bond_mode=active-backup lacp=off other_config:bond-detect-mode=miimon other_config:bond-miimon-interval=500"
+  #
+  NetworkDeploymentActions: ['CREATE','UPDATE']

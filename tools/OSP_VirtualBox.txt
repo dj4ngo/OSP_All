@@ -1,0 +1,103 @@
+for i in $(seq 1 16); do vboxmanage modifyvm baremetal${i} --name OSPbaremetal${i}; done
+
+[stack@instack ~]$ ironic node-create -n baremetal1 -d pxe_ssh -i ssh_address=10.0.128.244 -i ssh_username=vmrun -i ssh_virt_type=vbox -i ssh_password=<.....>
++--------------+------------------------------------------------------------------------+
+| Property     | Value                                                                  |
++--------------+------------------------------------------------------------------------+
+| uuid         | a9f62618-d31a-4c21-9f62-9028f2dc9094                                   |
+| driver_info  | {u'ssh_username': u'vmrun', u'ssh_virt_type': u'vbox', u'ssh_address': |
+|              | u'10.0.128.244', u'ssh_password': u'******'}                           |
+| extra        | {}                                                                     |
+| driver       | pxe_ssh                                                                |
+| chassis_uuid |                                                                        |
+| properties   | {}                                                                     |
+| name         | baremetal1                                                             |
++--------------+------------------------------------------------------------------------+
+
+[stack@instack ~]$ ironic port-create -n a9f62618-d31a-4c21-9f62-9028f2dc9094 -a 08:00:27:B5:3B:7B     
++-----------+--------------------------------------+
+| Property  | Value                                |
++-----------+--------------------------------------+
+| node_uuid | a9f62618-d31a-4c21-9f62-9028f2dc9094 |
+| extra     | {}                                   |
+| uuid      | 5c2de47e-766f-4ffe-a732-2a3b0ca33c32 |
+| address   | 08:00:27:b5:3b:7b                    |
++-----------+--------------------------------------+
+
+
+# Notes:
+
+*) raistlin@thorbardin:
+$ cd /net/imladris/export/home/raistlin/World/Vincent/Code/GIT/vbox
+$ ./launch_128GB.sh
+$ rsync -av ifcfg* root@10.0.128.224:/etc/sysconfig/network-scripts/
+$ ssh root@10.0.128.224 reboot
+$ ping osp5
+$ cd /net/imladris/export/home/raistlin/World/Vincent/Code/GIT/OSP
+$ rsync  -av * stack@osp5:
+
+*) root@imladris:
+# /root/tools/bin/toplevel_install_tools.sh osp5
+
+*) root@osp5 (RHOS-RELEASE)
+
+# openvpn /etc/openvpn/redhat.ovpn
+# rhos-release -P 8-director
+####  rhos-release -p 2016-03-29.3 8-director; rhos-release 8
+
+*) root@osp5 (RHOS-RELEASE)
+# /net/imladris/export/home/shared/data/install/Krynn/Docs/RedHat/RHEL7_OSP8_RHSM.sh 
+# echo 'bonding' > /etc/modules-load.d/bonding.conf
+# /usr/sbin/iptables -t nat -A POSTROUTING -o bond3 -j MASQUERADE
+# /usr/sbin/iptables-save > /etc/sysconfig/iptables
+
+*) On osp5
+# su - stack
+
+# OSP7:
+$ sudo yum install -y python-rdomanager-oscplugin libguestfs-tools libguestfs-xfs libguestfs-devel certmonger
+
+# OSP8/9/10:
+$ sudo yum install -y python-tripleoclient rhosp-director-images libguestfs-tools libguestfs-xfs libguestfs-devel certmonger
+
+# Install undercloud
+$ openstack undercloud install
+
+##### $ sudo perl -pi -e "s@VBoxManage'@VBoxManageWrapper'@"  /usr/lib/python2.7/site-packages/ironic/drivers/modules/ssh.py
+
+$ sudo patch -p0 < ${HOME}/osp8/ssh.py.patch   /usr/lib/python2.7/site-packages/ironic/drivers/modules/ssh.py
+$ sudo python -m compileall /usr/lib/python2.7/site-packages/ironic/drivers/modules/ssh.py 
+#### $ sudo cp -fv inspector.ipxe /httpboot/inspector.ipxe
+
+# Virtio PXE booting is slow:
+$ sudo crudini --set /etc/ironic/ironic.conf conductor max_time_interval 300
+# Lower timeout value
+$ sudo crudini --set /etc/ironic-inspector/inspector.conf DEFAULT timeout 600
+
+# Improve heat performance (fingers crossed):
+sudo crudini --set --format=ini /etc/heat/heat.conf cache backend dogpile.cache.memcached
+sudo crudini --set --format=ini /etc/heat/heat.conf cache enabled True
+sudo crudini --set --format=ini /etc/heat/heat.conf cache memcache_servers 127.0.0.1:11211
+sudo crudini --set --format=ini /etc/heat/heat.conf DEFAULT num_engine_workers 4
+sudo crudini --set --format=ini /etc/heat/heat.conf heat_api_cfn workers 4
+sudo crudini --set --format=ini /etc/heat/heat.conf heat_api workers 4
+sudo crudini --set /etc/ironic/ironic.conf conductor power_state_sync_max_retries 5
+sudo crudini --set /etc/ironic/ironic.conf api api_workers 4
+
+$ sudo systemctl restart openstack-ironic\* openstack-heat\*
+
+$ cd images
+$ tar xvf /usr/share/rhosp-director-images/ironic-python-agent.tar
+$ tar xvf /usr/share/rhosp-director-images/overcloud-full.tar
+$ virt-customize -a overcloud-full.qcow2 --root-password password:r00tme
+
+$ openstack overcloud image upload --image-path ${HOME}/images/ --update-existing
+$ openstack baremetal configure boot
+$ openstack baremetal introspection bulk start
+
+*) raistlin@thorbardin:
+#### This requires SSH trusted keys as root to: 1) the hypervisor and 2) the instack VM (osp5)
+$ cd /net/imladris/export/home/raistlin/World/Vincent/Code/GIT/vbox
+$ ./OSP_VBox_ironic_cleanup.sh
+$ ./OSP_VBox_ironic_create.sh 
+

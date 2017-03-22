@@ -1,0 +1,85 @@
+heat_template_version: 2014-10-16
+description: 'FirstBoot Configuration, multiple'
+
+parameters:
+  emc_scaleio_ip1:
+    default: ''
+    description: IP1 of EMC ScaleIO appliance.
+    type: string
+  emc_scaleio_ip2:
+    default: ''
+    description: IP2 of EMC ScaleIO appliance.
+    type: string
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: create_log_dir}
+      - config: {get_resource: init_disks}
+      - config: {get_resource: iscsi_initname}
+      - config: {get_resource: tuned_profile}
+      - config: {get_resource: controller_fs_mongodb}
+      - config: {get_resource: compute_fs_nova}
+      - config: {get_resource: install_emc_scaleio}
+      - config: {get_resource: install_f5_lbaas_rpms}
+
+  create_log_dir:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: all-firstboot-config/scripts/create_log_dir.sh}
+
+  init_disks:
+    type: OS::Heat::SoftwareConfig
+    depends_on: create_log_dir
+    properties:
+      config: {get_file: all-firstboot-config/scripts/diskinit.sh}
+
+  iscsi_initname:
+    type: OS::Heat::SoftwareConfig
+    depends_on: create_log_dir
+    properties:
+      config: {get_file: all-firstboot-config/scripts/iscsi-initname.sh}
+
+  tuned_profile:
+    type: OS::Heat::SoftwareConfig
+    depends_on: create_log_dir
+    properties:
+      config: {get_file: all-firstboot-config/scripts/tuned-profile.sh}
+
+  controller_fs_mongodb:
+    type: OS::Heat::SoftwareConfig
+    depends_on: create_log_dir
+    properties:
+      group: script
+      config: {get_file: all-firstboot-config/scripts/create_controller_fs_mongodb.sh }
+
+  compute_fs_nova:
+    type: OS::Heat::SoftwareConfig
+    depends_on: create_log_dir
+    properties:
+      group: script
+      config: {get_file: all-firstboot-config/scripts/create_compute_fs_nova.sh }
+
+  install_emc_scaleio:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config:
+        str_replace:
+          params:
+            _EMC_MDMIP1_: {get_param: emc_scaleio_ip1}
+            _EMC_MDMIP2_: {get_param: emc_scaleio_ip2}
+          template: {get_file: all-firstboot-config/scripts/install_emc_scaleio.sh}
+
+  install_f5_lbaas_rpms:
+    type: OS::Heat::SoftwareConfig
+    depends_on: install_emc_scaleio
+    properties:
+      group: script
+      config: {get_file: all-firstboot-config/scripts/install_f5_lbaas_rpms.sh }
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}

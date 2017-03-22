@@ -1,0 +1,90 @@
+parameter_defaults:
+  # EMC ScaleIO
+  emc_scaleio_ip1: '10.128.19.81'
+  emc_scaleio_ip2: '10.128.19.82'
+  # Ad integration
+  osp_ad_enable: 'false'
+  osp_netbios_domain: 'KRYNN'
+  osp_ad_primary_dc: 'ad01.ad.lasthome.solace.krynn'
+  # F5 parameters
+  f5_icontrol_hostname: '10.128.19.83'
+  f5_env_prefix: 'nxgenaz3'
+  #
+  # Disable insecure protocols:
+  tripleo::loadbalancer::ssl_cipher_suite: "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AES:RSA+3DES:!ADH:!AECDH:!MD5:!DSS"
+  tripleo::loadbalancer::ssl_options: "no-sslv3 "
+  controllerExtraConfig:
+    controller_classes:
+    - ::ceilometer::config
+    - ::cinder
+    - ::cinder::config
+    - ::glance::config
+    - ::glance::api
+    - ::nova::config
+    # ScaleIO
+    cinder_user_enabled_backends: "[scaleio]"
+    cinder::config::cinder_config:
+        scaleio/volume_driver:
+            value: 'cinder.volume.drivers.emc.scaleio.ScaleIODriver'
+        scaleio/sio_protection_domain_name:
+            value: 'default'
+        scaleio/sio_storage_pool_name:
+            value: 'default'
+        scaleio/sio_storage_pools:
+            value: 'default:default'
+        scaleio/sio_force_delete:
+            value: 'True'
+        scaleio/sio_round_volume_capacity:
+            value: 'True'
+        scaleio/volume_backend_name:
+            value: 'scaleio'
+    nova::config::nova_config:
+        neutron/allow_duplicate_networks:
+            value: 'False'
+
+  NovaComputeExtraConfig:
+    nova::config::nova_config:
+        neutron/allow_duplicate_networks:
+            value: 'False'
+      # Workaround for: https://bugzilla.redhat.com/show_bug.cgi?id=1372763
+        libvirt/mem_stats_period_seconds:
+            value: '0'
+
+parameters:
+  GlanceBackend: swift
+  controllerExtraConfig:
+    controller_classes:
+    - ::ceilometer::config
+    - ::glance::config
+    - ::glance::api
+    #
+    # Ceilometer metrics
+    #
+    glance::config::api_config:
+        glance_store/swift_store_auth_address:
+            value: http://nxgen307.fsc.fedex.com/auth/v1.0
+        glance_store/swift_store_user:
+            value: swift
+        glance_store/swift_store_key:
+            value: fedex123
+        glance_store/swift_store_auth_version:
+            value: 1
+    # Swift as glance backend
+    glance::backend::swift::default_swift_reference: swiftstack
+    glance::backend::swift::swift_store_auth_address: http://nxgen307.fsc.fedex.com/auth/v1.0
+    glance::backend::swift::swift_store_user: swift
+    glance::backend::swift::swift_store_key: fedex123
+    glance::backend::swift::swift_store_auth_version: 1
+    # Ceilometer
+    ceilometer::metering_time_to_live: 2592002
+    # Keystone V3
+    horizon::keystone_multidomain_support: true
+    horizon::keystone_default_domain: Default    
+    horizon::api_versions:
+      'identity': '3'
+    keystone::config::keystone_config:
+      identity/domain_specific_drivers_enabled:
+        value: 'true'
+      identity/domain_config_dir:   
+        value: '/etc/keystone/domains' 
+    nova::api::auth_version: 'v3'

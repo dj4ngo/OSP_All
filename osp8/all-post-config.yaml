@@ -1,0 +1,73 @@
+heat_template_version: 2014-10-16
+description: 'Extra Post-Deployment Config, multiple'
+parameters:
+  servers:
+    type: json
+
+
+# Note depends_on may be used for serialization if ordering is important
+resources:
+  DeployIdentifierStampPostConfig:
+    type: all-post-config/deployid-post-config.yaml
+    properties:
+        servers: {get_param: servers}
+
+  MultiPathExtraPostConfig:
+    type: all-post-config/apply-multipath.yaml
+    properties:
+        servers: {get_param: servers}
+
+  OVSExtraPostConfig:
+    type: all-post-config/ovs-post-config.yaml
+    properties:
+      servers:  {get_param: servers}      
+
+  SELinuxExtraPostConfig:
+    type: all-post-config/selinux-post-config.yaml
+    depends_on: OVSExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
+  TrustedKeysExtraPostConfig:
+    type: all-post-config/trusted-keys-post-config.yaml
+    depends_on: SELinuxExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
+  EthtoolOptsExtraPostConfig:
+    type: all-post-config/ethtool-opts-post-config.yaml
+    depends_on: SELinuxExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
+  EnableHorizonMultiDomainExtraPostConfig:
+    type: all-post-config/enable-horizon-domains.yaml
+    depends_on: SELinuxExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
+  ConfigureADIntegrationExtraPostConfig:
+    type: all-post-config/configure-ADIntegration.yaml
+    depends_on: EnableHorizonMultiDomainExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
+  PcsClusterRestartExtraPostConfig:
+    type: all-post-config/pcs-cluster-restart-post-config.yaml
+    depends_on: SELinuxExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
+outputs:
+  deploy_stdout:
+    value:
+      list_join:
+      - ''
+      - - {get_attr: [OVSExtraPostConfig, deploy_stdout]}
+        - {get_attr: [MultiPathExtraPostConfig, deploy_stdout]}
+        - {get_attr: [SELinuxExtraPostConfig, deploy_stdout]}
+        - {get_attr: [TrustedKeysExtraPostConfig, deploy_stdout]}
+        - {get_attr: [EthtoolOptsExtraPostConfig, deploy_stdout]}
+#        - {get_attr: [EnableHorizonMultiDomainExtraPostConfig, deploy_stdout]}
+#        - {get_attr: [ConfigureADIntegrationExtraPostConfig, deploy_stdout]}
+#        - {get_attr: [PcsClusterRestartExtraPostConfig, deploy_stdout]}

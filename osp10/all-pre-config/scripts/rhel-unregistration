@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+set -x ; VLOG=/var/log/ospd/pre_deploy-rhel-unregistration.log ; exec &> >(tee -a "${VLOG}")
+
+case "${REG_METHOD:-}" in
+    portal|satellite)
+        # Allow unregistration to fail.
+        # We don't want to fail stack deletes if unregistration fails.
+        # Note that this will be a no-op on satellite 5, which doesn't support
+        # unregistering from the cli.
+        subscription-manager unregister || true
+        subscription-manager clean || true
+        ;;
+    disable)
+        echo "Disabling RHEL unregistration"
+        ;;
+    *)
+        echo "WARNING: only 'portal', 'satellite', and 'disable' are valid values for REG_METHOD."
+        exit 0
+esac

@@ -1,0 +1,27 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Configure a specific tuned profile.
+
+parameters:
+  server:
+    type: string
+
+resources:
+  TunedProfileExtraPreConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/tuned-profile.sh}
+
+  TunedProfileExtraPreDeployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config: {get_resource: TunedProfileExtraPreConfig}
+      server: {get_param: server}
+      actions: ['CREATE','UPDATE']
+
+outputs:
+  deploy_stdout:
+    description: Deployment reference, used to trigger pre-deploy on changes
+    value: {get_attr: [TunedProfileExtraPreDeployment, deploy_stdout]}

@@ -1,0 +1,28 @@
+--- /usr/share/tripleo-image-elements/selinux/custom-policies/tripleo-selinux-rabbitmq.te.orig	2016-02-26 16:15:15.000000000 -0500
++++ /usr/share/tripleo-image-elements/selinux/custom-policies/tripleo-selinux-rabbitmq.te	2016-11-03 22:35:56.955249595 -0400
+@@ -1,5 +1,5 @@
+ 
+-module tripleo_selinux_rabbitmq 1.0;
++module tripleo-selinux-rabbitmq 1.0;
+ 
+ require {
+         type rabbitmq_var_lib_t;
+--- /usr/share/tripleo-image-elements/selinux/custom-policies/tripleo-selinux-mariadb.te.orig	2016-11-03 22:38:20.460422470 -0400
++++ /usr/share/tripleo-image-elements/selinux/custom-policies/tripleo-selinux-mariadb.te	2016-11-03 22:19:52.991136697 -0400
+@@ -1,5 +1,5 @@
+ 
+-module tripleo_selinux_mariadb 1.0;
++module tripleo-selinux-mariadb 1.0;
+ 
+ require {
+ 	type haproxy_t;
+--- /usr/share/instack-undercloud/ipxe/post-install.d/86-selinux.orig	2016-11-03 22:17:05.076517456 -0400
++++ /usr/share/instack-undercloud/ipxe/post-install.d/86-selinux	2016-11-03 22:32:29.391683707 -0400
+@@ -8,5 +8,5 @@
+ mkdir -p /opt/stack/selinux-policy
+ 
+ # Compile the selinux policy
+-checkmodule -M -m -o /tmp/ipxe.mod $(dirname $0)/../selinux/ipxe.te
+-sudo semodule_package -m /tmp/ipxe.mod -o /opt/stack/selinux-policy/ipxe.pp
++checkmodule -M -m -o /tmp/ironic-ipxe.mod $(dirname $0)/../selinux/ipxe.te
++sudo semodule_package -m /tmp/ironic-ipxe.mod -o /opt/stack/selinux-policy/ipxe.pp

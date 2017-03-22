@@ -1,0 +1,22 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Apply multipath config to overcloud systems
+
+parameters:
+  servers:
+    type: json
+
+resources:
+  MultiPathConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/config_lvm_multipath.sh}
+
+  MultiPathDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      servers: {get_param: servers}
+      config:  {get_resource: MultiPathConfig}
+      actions: ['CREATE','UPDATE'] # do this on CREATE and UPDATE

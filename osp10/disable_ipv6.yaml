@@ -1,0 +1,10 @@
+# only accept_ra should be necessary
+parameter_defaults:
+  controllerExtraConfig:
+    sysctl_settings:
+      net.ipv6.conf.all.disable_ipv6:
+        value: 1
+      net.ipv6.conf.all.accept_ra_defrtr:
+        value: 1
+      net.ipv6.conf.all.accept_ra:
+        value: 0

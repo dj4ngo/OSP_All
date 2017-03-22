@@ -1,0 +1,32 @@
+heat_template_version: 2014-10-16
+description: 'Extra Post-Deployment Config, multiple'
+parameters:
+  server:
+    type: string
+
+
+# Note depends_on may be used for serialization if ordering is important
+resources:
+  KeystoneTokenExpiration:
+    type: all-pre-config/apply-keystone-token-expiration.yaml
+    properties:
+        server: {get_param: server}
+
+  RhelRegistrationPreConfig:
+    type: all-pre-config/rhel-registration.yaml
+    properties:
+        server: {get_param: server}
+
+  CorpCertificateExtraPreConfig:
+    type: all-pre-config/add-corp-certificate.yaml
+    properties:
+        server: {get_param: server}
+
+outputs:
+  deploy_stdout:
+    value:
+      list_join:
+      - ''
+      - - {get_attr: [KeystoneTokenExpiration, deploy_stdout]}
+        - {get_attr: [RhelRegistrationPreConfig, deploy_stdout]}
+        - {get_attr: [CorpCertificateExtraPreConfig, deploy_stdout]}

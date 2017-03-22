@@ -1,0 +1,53 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Execute Active Directory specific customization
+
+parameters:
+  servers:
+    type: json
+  osp_ad_enable:
+    default: 'False'
+    description: 'Feature Flag to enable or disable AD Integration'
+    type: string
+  osp_ad_primary_dc:
+    default: 'ad01.ad.lasthome.solace.krynn'
+    description: > 
+      Primary Domain Controller of a given AD domain.
+      This is just the hostname, _without_ the ldaps:// and :636 parts..
+    type: string
+  osp_netbios_domain:
+    default: 'KRYNN'
+    description: 'NetBIOS Domain Name for Active Directory'
+    type: string
+  osp_ad_domain:
+    default: 'ad.lasthome.solace.krynn'
+    description: 'AD Domain Name for Active Directory'
+    type: string
+
+resources:
+  #############################################
+  # Defines the Software Configuration Object #
+  #############################################
+  ActiveDirectoryIntegrationConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: 
+        str_replace:
+          template: {get_file: scripts/configure_ADIntegration.sh}
+          params:
+            __AD_ENABLE__: {get_param: osp_ad_enable}
+            __AD_PRIMARY_DC__: {get_param: osp_ad_primary_dc}
+            __NETBIOS_DOMAIN__: {get_param: osp_netbios_domain}
+            __AD_DOMAIN__: {get_param: osp_ad_domain}
+
+  ########################################################
+  # Defines the deployment of the Software Configuration #
+  ########################################################
+  ActiveDirectoryIntegrationDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      servers:  {get_param: servers}
+      config: {get_resource: ActiveDirectoryIntegrationConfig}
+      actions: ['CREATE','UPDATE']

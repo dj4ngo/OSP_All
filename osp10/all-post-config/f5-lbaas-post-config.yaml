@@ -1,0 +1,40 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Enabled F5 BigIP Openstack LBaaS Integration configuration..
+
+parameters:
+  servers:
+    type: json
+  ConfigDebug:
+    default: false
+    description: Enable puppet debugging
+    type: boolean
+  f5_icontrol_hostname:
+    default: ''
+    description: 'Defines the F5 icontrol_hostname in /etc/neutron/services/f5/f5-openstack-agent.ini'
+    type: string
+  f5_env_prefix:
+    default: ''
+    description: 'Defines the F5 environment_prefix in /etc/neutron/services/f5/f5-openstack-agent.ini'
+    type: string
+
+resources:
+  F5LbaasExtraPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: 
+        str_replace:
+          template: {get_file: scripts/configure_f5_lbaas.sh}
+          params:
+            __F5_ICONTROL_HOSTNAME__: {get_param: f5_icontrol_hostname}
+            __F5_ENV_PREFIX__: {get_param: f5_env_prefix}
+
+  F5LbaasExtraPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: F5LbaasExtraPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']
+

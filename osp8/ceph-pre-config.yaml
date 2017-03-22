@@ -1,0 +1,20 @@
+heat_template_version: 2014-10-16
+description: 'Extra Post-Deployment Config, multiple'
+parameters:
+  servers:
+    type: json
+
+
+# Note depends_on may be used for serialization if ordering is important
+resources:
+  KeystoneTokenExpiration:
+    type: all-pre-config/apply-keystone-token-expiration.yaml
+    properties:
+        servers: {get_param: servers}
+
+outputs:
+  deploy_stdout:
+    value:
+      list_join:
+      - ''
+      - - {get_attr: [KeystoneTokenExpiration, deploy_stdout]}

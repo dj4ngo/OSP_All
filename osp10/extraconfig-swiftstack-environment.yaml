@@ -1,0 +1,16 @@
+parameter_defaults:
+  controllerExtraConfig:
+    glance::config::api_config:
+        glance_store/swift_store_auth_address:
+            value: http://nxgen307.fsc.fedex.com/auth/v1.0
+        glance_store/swift_store_user:
+            value: swift
+        glance_store/swift_store_key:
+            value: fedex123
+        glance_store/swift_store_auth_version:
+            value: 1
+    glance::backend::swift::default_swift_reference: swiftstack
+    glance::backend::swift::swift_store_auth_address: http://nxgen307.fsc.fedex.com/auth/v1.0
+    glance::backend::swift::swift_store_user: swift
+    glance::backend::swift::swift_store_key: fedex123
+    glance::backend::swift::swift_store_auth_version: 1

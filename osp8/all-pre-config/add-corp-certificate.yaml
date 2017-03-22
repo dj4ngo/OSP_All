@@ -1,0 +1,28 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Add CORP certificate under /etc/pki/ca-trust/source/anchors/corp.pem and symlink
+  to /etc/pki/tls/certs/corp.crt
+
+parameters:
+  server:
+    type: string
+
+resources:
+  CorpCertificateExtraPreConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/add_corp_certificate.sh}
+
+  CorpCertificateExtraPreDeployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config: {get_resource: CorpCertificateExtraPreConfig}
+      server: {get_param: server}
+      actions: ['CREATE','UPDATE']
+
+outputs:
+  deploy_stdout:
+    description: Deployment reference, used to trigger pre-deploy on changes
+    value: {get_attr: [CorpCertificateExtraPreDeployment, deploy_stdout]}

@@ -1,0 +1,26 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Disable selinux (set to permissive mode)
+
+parameters:
+  servers:
+    type: json
+  ConfigDebug:
+    default: false
+    description: Enable puppet debugging
+    type: boolean
+
+resources:
+  SElinuxExtraPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/selinux_disable.sh}
+
+  SElinuxExtraPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: SElinuxExtraPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']

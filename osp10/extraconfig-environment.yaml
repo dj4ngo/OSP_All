@@ -1,0 +1,76 @@
+parameter_defaults:
+  # EMC ScaleIO
+  emc_scaleio_ip1: '10.128.19.81'
+  emc_scaleio_ip2: '10.128.19.82'
+  # Ad integration
+  osp_ad_enable: 'False'
+  osp_netbios_domain: 'KRYNN'
+  osp_ad_primary_dc: 'ad01.ad.lasthome.solace.krynn'
+  osp_ad_domain: 'ad.lasthome.solace.krynn'
+  # F5 parameters
+  f5_icontrol_hostname: '10.128.19.83'
+  f5_env_prefix: 'nxgenaz3'
+  #
+  # Disable insecure protocols:
+  tripleo::loadbalancer::ssl_cipher_suite: "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AES:RSA+3DES:!ADH:!AECDH:!MD5:!DSS"
+  tripleo::loadbalancer::ssl_options: "no-sslv3 "
+  controllerExtraConfig:
+    controller_classes:
+    - ::ceilometer::config
+    - ::cinder::config
+    - ::glance::config
+    - ::nova::config
+    - ::neutron::config
+    # Allow only 1 L3 HA router
+    neutron::config::server_config:
+      DEFAULT/min_l3_agents_per_router:
+         value: '1'
+    # Disable httpd traces
+    apache::trace_enable: 'Off'
+    # Ceilometer
+    ceilometer::metering_time_to_live: 2592002
+    # Keystone V3
+    horizon::keystone_multidomain_support: 'True'
+    horizon::keystone_default_domain: Default    
+    horizon::api_versions:
+      'identity': '3'
+    keystone::config::keystone_config:
+      identity/domain_specific_drivers_enabled:
+        value: 'True'
+      identity/domain_config_dir:   
+        value: '/etc/keystone/domains' 
+    # ScaleIO
+    cinder_user_enabled_backends: "[scaleio]"
+    cinder::config::cinder_config:
+        scaleio/volume_driver:
+            value: 'cinder.volume.drivers.emc.scaleio.ScaleIODriver'
+        scaleio/sio_protection_domain_name:
+            value: 'default'
+        scaleio/sio_storage_pool_name:
+            value: 'default'
+        scaleio/sio_storage_pools:
+            value: 'default:default'
+        scaleio/sio_force_delete:
+            value: 'True'
+        scaleio/sio_round_volume_capacity:
+            value: 'True'
+        scaleio/volume_backend_name:
+            value: 'scaleio'
+    # nova
+    #nova::api::auth_version: 'v3'
+    nova::config::nova_config:
+      libvirt/volume_use_multipath:
+        value: 'True'
+
+  NovaComputeExtraConfig:
+    compute_classes:
+    - ::nova::config
+    #nova::api::auth_version: 'v3'
+    nova::config::nova_config:
+      DEFAULT/allow_migrate_to_same_host:
+        value: 'True'
+      libvirt/volume_use_multipath:
+        value: 'True'
+      # Workaround for: https://bugzilla.redhat.com/show_bug.cgi?id=1372763
+      libvirt/mem_stats_period_seconds:
+        value: '0'

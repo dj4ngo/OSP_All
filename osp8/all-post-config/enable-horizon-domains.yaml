@@ -1,0 +1,22 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Add multi-domain support to Horizon...
+
+parameters:
+  servers:
+    type: json
+
+resources:
+  MultiDomainHorizonConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/enable_horizon_domains.sh}
+
+  MultiDomainHorizonDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      servers:  {get_param: servers}
+      config: {get_resource: MultiDomainHorizonConfig}
+      actions: ['CREATE','UPDATE']

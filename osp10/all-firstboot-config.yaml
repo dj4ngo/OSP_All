@@ -1,0 +1,113 @@
+heat_template_version: 2014-10-16
+description: 'FirstBoot Configuration, multiple'
+
+parameters:
+  ControllerHostnameFormat:
+    type: string
+    default: ""
+  ComputeHostnameFormat:
+    type: string
+    default: ""
+  CephStorageHostnameFormat:
+    type: string
+    default: ""
+  ObjectStorageHostnameFormat:
+    type: string
+    default: ""
+  emc_scaleio_ip1:
+    default: ''
+    description: IP1 of EMC ScaleIO appliance.
+    type: string
+  emc_scaleio_ip2:
+    default: ''
+    description: IP2 of EMC ScaleIO appliance.
+    type: string
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: create_log_dir}
+      - config: {get_resource: register_node_role}
+      - config: {get_resource: init_disks}
+      - config: {get_resource: iscsi_initname}
+      - config: {get_resource: controller_fs_mongodb}
+      - config: {get_resource: compute_fs_nova}
+      - config: {get_resource: install_emc_scaleio}
+      - config: {get_resource: install_f5_lbaas_rpms}
+      - config: {get_resource: encapsulate_rootvol}
+
+  create_log_dir:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: {get_file: all-firstboot-config/scripts/create_log_dir.sh}
+
+  register_node_role:
+    type: OS::Heat::SoftwareConfig
+    depends_on: create_log_dir
+    properties:
+      group: script
+      config:
+        str_replace:
+          template: {get_file: all-firstboot-config/scripts/register_node_role.sh}
+          params:
+            _CTRL_FORMAT_: {get_param: ControllerHostnameFormat}
+            _CMPT_FORMAT_: {get_param: ComputeHostnameFormat}
+            _CEPH_FORMAT_: {get_param: CephStorageHostnameFormat}
+            _SWFT_FORMAT_: {get_param: ObjectStorageHostnameFormat}
+
+  init_disks:
+    type: OS::Heat::SoftwareConfig
+    depends_on: register_node_role
+    properties:
+      config: {get_file: all-firstboot-config/scripts/diskinit.sh}
+
+  iscsi_initname:
+    type: OS::Heat::SoftwareConfig
+    depends_on: register_node_role
+    properties:
+      config: {get_file: all-firstboot-config/scripts/iscsi-initname.sh}
+
+  controller_fs_mongodb:
+    type: OS::Heat::SoftwareConfig
+    depends_on: init_disks
+    properties:
+      group: script
+      config: {get_file: all-firstboot-config/scripts/create_controller_fs_mongodb.sh }
+
+  compute_fs_nova:
+    type: OS::Heat::SoftwareConfig
+    depends_on: init_disks
+    properties:
+      group: script
+      config: {get_file: all-firstboot-config/scripts/create_compute_fs_nova.sh }
+
+  install_emc_scaleio:
+    type: OS::Heat::SoftwareConfig
+    depends_on: controller_fs_mongodb
+    properties:
+      group: script
+      config:
+        str_replace:
+          template: {get_file: all-firstboot-config/scripts/install_emc_scaleio.sh}
+          params:
+            _EMC_MDMIP1_: {get_param: emc_scaleio_ip1}
+            _EMC_MDMIP2_: {get_param: emc_scaleio_ip2}
+
+  install_f5_lbaas_rpms:
+    type: OS::Heat::SoftwareConfig
+    depends_on: install_emc_scaleio
+    properties:
+      group: script
+      config: {get_file: all-firstboot-config/scripts/install_f5_lbaas_rpms.sh }
+
+  encapsulate_rootvol:
+    type: OS::Heat::SoftwareConfig
+    depends_on: [ compute_fs_nova, controller_fs_mongodb, install_f5_lbaas_rpms ]
+    properties:
+      config: {get_file: all-firstboot-config/scripts/encapsulate_rootvol.sh}
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}

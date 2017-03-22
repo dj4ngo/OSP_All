@@ -1,0 +1,26 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Add root pubkey to authorized_keys on all nodes and enable RootLogin
+
+parameters:
+  servers:
+    type: json
+  ConfigDebug:
+    default: false
+    description: Enable puppet debugging
+    type: boolean
+
+resources:
+  EthtoolOptsExtraPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/add_ethtool_opts.sh}
+
+  EthtoolOptsExtraPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: EthtoolOptsExtraPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']
