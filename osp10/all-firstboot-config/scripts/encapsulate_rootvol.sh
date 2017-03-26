@@ -387,20 +387,20 @@ update_grub_root_spec() {
 
 # TBW
 function launch_umount_and_reboot() {
+	l=0
 	sync
 	umount /
-	sync
-	if [ -f /proc/sys/vm/drop_caches ]; then
-		echo "Flushing caches ..."
-		echo 1 > /proc/sys/vm/drop_caches
-	fi
-	sync
-
 	# If running on virtual H/W, wait a little while as not to
 	# overload the Hypervisor if all nodes proceed at the same time..
 	if [ ${HYPERVISORS} -ge 1 ]; then
-		echo "Virt Env. detected, sleeping % 480..."
-		sleep $(($(od -A n -t d -N 3 /dev/urandom) % 480))
+		if [ -f /var/log/ospd/node_index ]; then
+			l=$(($(grep '^[0-9]' /var/log/ospd/node_index) * 120 ))
+		else
+			l=$(($(od -A n -t d -N 3 /dev/urandom) % 240))
+		fi
+		l=$((${l}+30))
+		echo "Virt Env. detected, sleeping ${l} seconds..."
+		sleep ${l}
 	fi
 	sync
 	reboot
