@@ -12,6 +12,13 @@ resource_registry:
 parameter_defaults:
   Debug: true
   #
+  # CloudDomain: lasthome.solace.krynn
+  # CloudName: overcloud.lasthome.solace.krynn
+  # CloudNameInternal: overcloud.internalapi.lasthome.solace.krynn
+  # CloudNameStorage: overcloud.storage.lasthome.solace.krynn
+  # CloudNameStorageManagement: overcloud.storagemgmt.lasthome.solace.krynn
+  # CloudNameCtlplane: overcloud.ctlplane.lasthome.solace.krynn
+  # Flavors
   OvercloudControlFlavor: control
   OvercloudComputeFlavor: compute
   OvercloudCephStorageFlavor: ceph-storage
@@ -29,7 +36,6 @@ parameter_defaults:
   # NovaComputeLibvirtType: 'kvm'
   RootPW: 'r00tme'
   #
-  # CloudDomain: lasthome.solace.krynn
   ControllerHostnameFormat: 'krynn-ctrl-%index%'
   ComputeHostnameFormat: 'krynn-cmpt-%index%'
   CephStorageHostnameFormat: 'krynn-ceph-%index%'

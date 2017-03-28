@@ -21,6 +21,13 @@ parameter_defaults:
     - ::glance::config
     - ::nova::config
     - ::neutron::config
+    # LBaas
+    horizon::neutron_options:       
+      enable_lb: true
+    neutron::agents::lbaas::manage_haproxy_package: false
+    neutron::agents::lbaas::enabled: true
+    neutron::agents::lbaas::manage_service: true
+    neutron::agents::lbaas::user_group: "haproxy"
     # Allow only 1 L3 HA router
     neutron::config::server_config:
       DEFAULT/min_l3_agents_per_router:
