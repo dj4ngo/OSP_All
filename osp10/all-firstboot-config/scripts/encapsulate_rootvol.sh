@@ -74,12 +74,8 @@ function check_prereqs_and_cleanup() {
 		if [ -x /sbin/virt-what ]; then
 			HYPERVISORS=$(/sbin/virt-what|egrep '(kvm|virtualbox|vmware)'|wc -l)
 		fi
-		if [ ${HYPERVISORS} -ge 1 ]; then
-			echo "Virt Env. detected."
-			/bin/rpm -e microcode_ctl
-		fi
 
-		# SELinux is not disabled permanently, fear not.
+		# SELinux off temporarily
 		/bin/cp -fax /etc/selinux/config /etc/selinux/config.before_lvmroot
 		sed -i -e "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
 		fixfiles -f -F restore /etc/selinux/config
@@ -272,7 +268,7 @@ function update_grub() {
 			/bin/cp -fax ${myroot}/boot/grub2/grub.cfg ${myroot}/boot/grub2/grub.cfg.before_lvmroot
 		fi
 		chroot ${myroot} /sbin/grubby --update-kernel=ALL --remove-args="root rhgb quiet"
-		chroot ${myroot} /sbin/grubby --update-kernel=ALL --args="root=/dev/mapper/${boot_dg}-${boot_lv} rd.lvm.lv=${boot_dg}/${boot_lv} rootdelay=${rootdelay_default} dolvm"
+		chroot ${myroot} /sbin/grubby --update-kernel=ALL --args="root=/dev/mapper/${boot_dg}-${boot_lv} rd.lvm.lv=${boot_dg}/${boot_lv} rootdelay=${rootdelay_default}"
 		if [ ${HYPERVISORS} -ge 1 ]; then
 			chroot ${myroot} /sbin/grubby --update-kernel=ALL --args="scsi_mod.scan=sync"
 		fi
