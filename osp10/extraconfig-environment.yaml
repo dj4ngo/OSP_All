@@ -28,6 +28,8 @@ parameter_defaults:
     neutron::agents::lbaas::enabled: true
     neutron::agents::lbaas::manage_service: true
     neutron::agents::lbaas::user_group: "haproxy"
+    # Prevent ARP spoofing OVS:
+    neutron::agents::ml2::ovs::prevent_arp_spoofing: false
     # Allow only 1 L3 HA router
     neutron::config::server_config:
       DEFAULT/min_l3_agents_per_router:
@@ -81,3 +83,7 @@ parameter_defaults:
       # Workaround for: https://bugzilla.redhat.com/show_bug.cgi?id=1372763
       libvirt/mem_stats_period_seconds:
         value: '0'
+      # Multiple ephemeral disks
+      DEFAULT/max_local_block_devices:
+        value: '4'
+      

@@ -69,7 +69,7 @@ parameter_defaults:
   ControlPlaneDefaultRoute: '10.20.0.2'
   # Generally the IP of the Undercloud
   EC2MetadataIp: '10.20.0.2'
-  ControllerEnableSwiftStorage: false
+  ControllerEnableSwiftStorage: true
   #
   CinderEnableIscsiBackend: false
   NovaEnableRbdBackend: true

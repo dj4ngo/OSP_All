@@ -20,13 +20,26 @@ resources:
 
   TunedProfilePreConfig:
     type: all-pre-config/tuned-profile.yaml
-    depends_on: RhelRegistrationPreConfig
     properties:
         server: {get_param: server}
 
   SetupNestedKVMPreConfig:
     type: all-pre-config/setup-nested-kvm.yaml
-    depends_on: RhelRegistrationPreConfig
+    properties:
+        server: {get_param: server}
+
+  AllowInnoDBFilePerTablePreConfig:
+    type: all-pre-config/allow-innodb-file-per-table.yaml
+    properties:
+        server: {get_param: server}
+
+  SysctlTunablesPreConfig:
+    type: all-pre-config/sysctl-tunables.yaml
+    properties:
+        server: {get_param: server}
+
+  BZ1406417GnocchiPreConfig:
+    type: all-pre-config/bz1406417-gnocchi.yaml
     properties:
         server: {get_param: server}
 
@@ -39,3 +52,6 @@ outputs:
         - {get_attr: [CorpCertificateExtraPreConfig, deploy_stdout]}
         - {get_attr: [TunedProfilePreConfig, deploy_stdout]}
         - {get_attr: [SetupNestedKVMPreConfig, deploy_stdout]}
+        - {get_attr: [AllowInnoDBFilePerTablePreConfig, deploy_stdout]}
+        - {get_attr: [SysctlTunablesPreConfig, deploy_stdout]}
+        - {get_attr: [BZ1406417GnocchiPreConfig, deploy_stdout]}
