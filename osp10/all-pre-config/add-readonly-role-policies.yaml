@@ -1,0 +1,41 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Add readonly role policies in:
+  /etc/nova/policy.json
+  /etc/heat/policy.json
+  /etc/ironic/policy.json
+  /etc/aodh/policy.json
+  /etc/cinder/policy.json
+  /etc/glance/policy.json
+  /etc/ceilometer/policy.json
+  /etc/neutron/policy.json
+  /etc/mistral/policy.json
+  /etc/keystone/policy.json
+  /etc/sahara/policy.json
+  /etc/zaqar/policy.json
+  /etc/manila/policy.json
+  /etc/gnocchi/policy.json
+
+parameters:
+  server:
+    type: string
+
+resources:
+  ReadOnlyRolePoliciesExtraPreConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/add_readonly_role_policies.sh}
+
+  ReadOnlyRolePoliciesExtraPreDeployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      config: {get_resource: ReadOnlyRolePoliciesExtraPreConfig}
+      server: {get_param: server}
+      actions: ['CREATE','UPDATE']
+
+outputs:
+  deploy_stdout:
+    description: Deployment reference, used to trigger pre-deploy on changes
+    value: {get_attr: [ReadOnlyRolePoliciesExtraPreDeployment, deploy_stdout]}

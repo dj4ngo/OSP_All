@@ -8,20 +8,20 @@ parameters:
     type: string
 
 resources:
-  BZ1406417GnocchiExtraPreConfig:
+  BZ1406417CephRadosGWExtraPreConfig:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
-      config: {get_file: scripts/bz1406417_gnocchi.sh}
+      config: {get_file: scripts/bz1406417_ceph_rgw.sh}
 
-  BZ1406417GnocchiExtraPreDeployment:
+  BZ1406417CephRadosGWExtraPreDeployment:
     type: OS::Heat::SoftwareDeployment
     properties:
-      config: {get_resource: BZ1406417GnocchiExtraPreConfig}
+      config: {get_resource: BZ1406417CephRadosGWExtraPreConfig}
       server: {get_param: server}
       actions: ['CREATE','UPDATE']
 
 outputs:
   deploy_stdout:
     description: Deployment reference, used to trigger pre-deploy on changes
-    value: {get_attr: [BZ1406417GnocchiExtraPreDeployment, deploy_stdout]}
+    value: {get_attr: [BZ1406417CephRadosGWExtraPreDeployment, deploy_stdout]}
