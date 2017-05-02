@@ -100,7 +100,7 @@ case ${my_node_role} in
 	;;
 esac
 
-# This is need to skip over the uuencoded payload
+# This is needed to skip over the uuencoded payload
 exit 0
 
 #################### STOP HERE AND ADD BINARY PAYLOAD ##########################
