@@ -6,13 +6,6 @@
 #
 # post_deploy script
 #
-# Verizon
-# Jay Cromer
-#
-# Borrowed from:
-#
-# Redhat
-# Jason Woods   jwoods@redhat.com
 # 2016-05-17
 
 set -x ; VLOG=/var/log/ospd/post_deploy-config_lvm_multipath.log ; exec &> >(tee -a "${VLOG}")
