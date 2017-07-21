@@ -38,16 +38,6 @@ resources:
     properties:
         server: {get_param: server}
 
-  BZ1406417CephRadosGWPreConfig:
-    type: all-pre-config/bz1406417-ceph-rgw.yaml
-    properties:
-        server: {get_param: server}
-
-  ReadOnlyRolePoliciesPreConfig:
-    type: all-pre-config/add-readonly-role-policies.yaml
-    properties:
-        server: {get_param: server}
-
 outputs:
   deploy_stdout:
     value:
@@ -59,5 +49,3 @@ outputs:
         - {get_attr: [SetupNestedKVMPreConfig, deploy_stdout]}
         - {get_attr: [AllowInnoDBFilePerTablePreConfig, deploy_stdout]}
         - {get_attr: [SysctlTunablesPreConfig, deploy_stdout]}
-        - {get_attr: [BZ1406417CephRadosGWPreConfig, deploy_stdout]}
-        - {get_attr: [ReadOnlyRolePoliciesPreConfig, deploy_stdout]}

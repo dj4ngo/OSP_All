@@ -42,9 +42,21 @@ resources:
     properties:
       servers:  {get_param: servers}
 
+  ReadOnlyRoleExtraPostConfig:
+    type: all-post-config/add-readonly-role.yaml
+    depends_on: EthtoolOptsExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
+  EnableCeilometerExtraPostConfig:
+    type: all-post-config/enable-ceilometer.yaml
+    depends_on: EthtoolOptsExtraPostConfig
+    properties:
+      servers:  {get_param: servers}
+
   PcsClusterRestartExtraPostConfig:
     type: all-post-config/pcs-cluster-restart-post-config.yaml
-    depends_on: ConfigureADIntegrationExtraPostConfig
+    depends_on: [ MultiPathExtraPostConfig, ReadOnlyRoleExtraPostConfig, EnableCeilometerExtraPostConfig ]
     properties:
       servers:  {get_param: servers}
 
@@ -65,4 +77,7 @@ outputs:
         - {get_attr: [TrustedKeysExtraPostConfig, deploy_stdout]}
         - {get_attr: [EthtoolOptsExtraPostConfig, deploy_stdout]}
         - {get_attr: [ConfigureADIntegrationExtraPostConfig, deploy_stdout]}
+        - {get_attr: [ReadOnlyRoleExtraPostConfig, deploy_stdout]}
+        - {get_attr: [EnableCeilometerExtraPostConfig, deploy_stdout]}
         - {get_attr: [PcsClusterRestartExtraPostConfig, deploy_stdout]}
+        - {get_attr: [DracutRebuildExtraPostConfig, deploy_stdout]}
