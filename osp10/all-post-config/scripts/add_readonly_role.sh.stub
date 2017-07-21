@@ -1,0 +1,117 @@
+#!/bin/bash
+# $Id$
+set -x ; VLOG=/var/log/ospd/post_deploy-add_readonly_role_policies.log ; exec &> >(tee -a "${VLOG}")
+my_node_role=$(cat /var/log/ospd/node_role)
+my_node_index=$(cat /var/log/ospd/node_index)
+
+#
+set -uf -o pipefail
+declare -A IP_LIST
+src_config=""
+dst_config=""
+policy_backup=""
+svc_name=""
+declare -i restart_svc=0
+
+# This tool is used to push policies on the overcloud
+[ "$BASH" ] && function whence
+{
+	type -p "$@"
+}
+#
+TOP_DIR="$(cd $(/usr/bin/dirname $(whence -- $0 || echo $0));pwd)/policydir"
+
+
+case ${my_node_role} in
+        CTRL)
+	# Extract our binary payload:
+	/usr/bin/python -c "import sys,uu; uu.decode('$0', sys.stdout)" |/usr/bin/tar xvzf -
+
+	# Verify
+	for mydir in "${TOP_DIR}/etc" "${TOP_DIR}/etc/nova" "${TOP_DIR}/etc/neutron"
+	do
+		if [ -d ${mydir} ]; then
+			echo "(II) Found directory ${mydir}..."
+		else
+			echo "(**) Directory ${mydir} not found! Exit!" ; exit 127
+		fi
+	done
+
+	# Verify syntax, abort if error..
+	for mysvc in aodh ceilometer cinder glance gnocchi heat ironic keystone manila mistral neutron nova sahara zaqar
+	do
+		src_config="${TOP_DIR}/etc/${mysvc}/policy.json"
+		json_verify -q < ${src_config}
+		if [ $? -eq 0 ]; then
+			echo "Validated JSON syntax of ${src_config}, OK"
+		else
+			echo "Testing JSON syntax of ${src_config} failed!!" ; exit 127
+		fi
+	done
+
+	# Perform conditional copy
+	for mysvc in aodh ceilometer cinder glance gnocchi heat ironic keystone manila mistral neutron nova sahara zaqar
+	do
+		src_config="${TOP_DIR}/etc/${mysvc}/policy.json"
+		dst_config="/etc/${mysvc}/policy.json"
+		policy_backup="${dst_config}.pre-readonly"
+
+		# Take a backup, if not present already..
+		if [ ! -f ${policy_backup} ]; then
+			if [ -f ${dst_config} ]; then
+				/bin/cp -afv ${dst_config} ${policy_backup}
+			fi
+		fi
+
+		# Compare files and copy if necessary...
+		cmp -s ${src_config} ${dst_config}
+		if [ $? -eq 0 ]; then
+			echo "  (II) No update needed on $(hostname -s):${dst_config}"
+		else
+			# Overwrite service config file....
+			echo "  (WW) Updating $(hostname -s):${dst_config} with ${src_config}..."
+			/bin/cp -f ${src_config} ${dst_config}
+
+			# Repairs permissions and SELinux context:
+			chown root:${mysvc} ${dst_config} && sudo chmod 640 ${dst_config}
+			restorecon ${dst_config} 2>/dev/null
+
+			# This is disabled by default as restarting services isn't necessary for policy.json updates.
+			if [ "x${restart_svc}" = "x1" ]; then
+				# Restart service appropriately... Only 'neutron' does not have an 'openstack' prefix in its service name
+				case "${mysvc}" in
+					neutron)
+						svc_name="${mysvc}"
+						;;
+					*)
+						svc_name="openstack-${mysvc}"
+						;;
+				esac
+				echo -n "  (WW) Restarting (systemctl) ${svc_name}-\* services on ${myctrl} ..."
+				systemctl restart "${svc_name}-\*" && echo OK
+			fi
+		fi
+	done
+
+	if [ $? -eq 0 ]; then
+		echo "(II) ALL done."
+	else
+		echo "(**) Failures seen, please check..."
+	fi
+	;;
+esac
+
+# Create readonly role using puppet on ctrl0
+case "${my_node_role}${my_node_index}" in
+	"CTRL0")
+		echo "Creating readonly role on Galera using Controller0..."
+		/bin/puppet apply -e 'keystone_role { 'readonly':  ensure => present }'
+	;;
+esac
+
+# This is needed to skip over the uuencoded payload
+exit 0
+
+#################### STOP HERE AND ADD BINARY PAYLOAD ##########################
+### done as: python -c "import sys,uu; uu.encode('policydir_only.tar.gz', sys.stdout)" >> add_readonly_role.sh #####
+################## ADD UUENCODED BINARY PAYLOAD BELOW #############################

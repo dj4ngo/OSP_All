@@ -1,0 +1,22 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Enable ceilometer on the overcloud
+
+parameters:
+  servers:
+    type: json
+
+resources:
+  EnableCeilometerExtraPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/enable_ceilometer.sh}
+
+  EnableCeilometerExtraPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: EnableCeilometerExtraPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']

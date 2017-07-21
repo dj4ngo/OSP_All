@@ -1,0 +1,37 @@
+heat_template_version: 2014-10-16
+
+description: >
+  Adds 'readonly' as a role in the Keystone DB..
+  Add policies for readonly role in:
+  /etc/nova/policy.json
+  /etc/heat/policy.json
+  /etc/ironic/policy.json
+  /etc/aodh/policy.json
+  /etc/cinder/policy.json
+  /etc/glance/policy.json
+  /etc/ceilometer/policy.json
+  /etc/neutron/policy.json
+  /etc/mistral/policy.json
+  /etc/keystone/policy.json
+  /etc/sahara/policy.json
+  /etc/zaqar/policy.json
+  /etc/manila/policy.json
+  /etc/gnocchi/policy.json
+
+parameters:
+  servers:
+    type: json
+
+resources:
+  ReadOnlyRoleExtraPostConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: {get_file: scripts/add_readonly_role.sh}
+
+  ReadOnlyRoleExtraPostDeployment:
+    type: OS::Heat::SoftwareDeployments
+    properties:
+      config: {get_resource: ReadOnlyRoleExtraPostConfig}
+      servers: {get_param: servers}
+      actions: ['CREATE','UPDATE']
